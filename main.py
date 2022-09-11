@@ -105,10 +105,27 @@ def give_number(message):
             bot.send_message(message.chat.id,
                              f'Третий аккаунт\nПровайдер: {provider_info_2}\nАдрес: {adres_6}\nФио: {user_name_2}\nТокен пользователя: {user_token_2}\nНомер: {number_info_2}\nAppartment_id: {appartment_id_6}\nSip: {sip_info_d}\nComplex_id: {complex_id_d}\nBuilding_id: {building_id_d}')
 
-
-
         except IndexError:
             bot.send_message(message.chat.id, "Больше аккаунтов нет")
+
+        try:
+            adress_3 = response[2]["data"]["user"]["apartment"][1]["title"]
+            appartment_id_3 = response[2]["data"]["user"]["apartment"][1]["id"]
+            sip_info_3 = response[2]["data"]["user"]["apartment"][1]["sip"]
+            complex_id_3 = response[2]["data"]["user"]["apartment"][1]["complex_id"]
+            building_id_3 = response[2]["data"]["user"]["apartment"][1]["building_id"]
+            bot.send_message(message.chat.id, f'Квартира 2 аккаунт 3:\nАдрес: {adress_3}\napp_id квартиры №2: {appartment_id_3}\nSip квартира №2: {sip_info_3}\nComplex_id_2: {complex_id_3}\nBuilding_id_2: {building_id_3}')
+
+            adress_4 = response[2]["data"]["user"]["apartment"][2]["title"]
+            appartment_id_4 = response[2]["data"]["user"]["apartment"][2]["id"]
+            sip_info_4 = response[2]["data"]["user"]["apartment"][2]["sip"]
+            complex_id_4 = response[2]["data"]["user"]["apartment"][2]["complex_id"]
+            building_id_4 = response[2]["data"]["user"]["apartment"][2]["building_id"]
+            bot.send_message(message.chat.id,
+                             f'Квартира 3 аккаунт 3:\nАдрес: {adress_4}\napp_id квартиры №2: {appartment_id_4}\nSip квартира №2: {sip_info_4}\nComplex_id_2: {complex_id_4}\nBuilding_id_2: {building_id_4}')
+
+        except IndexError:
+            bot.send_message(message.chat.id, "Больше квартир у аккаунта 2 нет")
 
 
         except TypeError:
