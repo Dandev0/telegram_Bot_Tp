@@ -125,14 +125,15 @@ def give_number(message):
                              f'Квартира 3 аккаунт 3:\nАдрес: {adress_4}\napp_id квартиры №2: {appartment_id_4}\nSip квартира №2: {sip_info_4}\nComplex_id_2: {complex_id_4}\nBuilding_id_2: {building_id_4}')
 
         except IndexError:
-            bot.send_message(message.chat.id, "Больше квартир у аккаунта 2 нет")
+            bot.send_message(message.chat.id, "Больше квартир у аккаунта 3 нет")
 
 
-        except TypeError:
-            bot.send_message(message.chat.id, 'Вы ввели не валидный номер или отвалился VPN на моем сервере')
+    except TypeError :
+        bot.send_message(message.chat.id, 'Вы ввели не валидный номер или отвалился VPN на моем сервере')
 
     except KeyError:
-        bot.send_message(message.chat.id, 'Ломаный аккаунт, без кв')
+        user_token_user =  response[0]["token"]
+        bot.send_message(message.chat.id, f'Аккаунт, без кв(возможно, это коммерция)\nПровайдер: {provider_info}\nТокен: {user_token_user}')
 
 
 bot.polling(none_stop=True)
