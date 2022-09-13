@@ -47,43 +47,44 @@ def binding(message):
         bot.send_message(message.chat.id, 'Ошибочная форма заполнения')
     except TypeError:
         bot.send_message(message.chat.id, 'Вы что-то сделали не так!')
-
-
 def info_user(message):
-    number = message.text
-    request_info_user = requests.get(
-        f'https://api-product.mysmartflat.ru/api/script/getuserdatafromphonenumber/?phone={number}')
-    response = request_info_user
-    response = response.json()
-    i = 0
-    x = 0
-    for i in range(len(response)):
-        try:
-            provider_info = response[i]["provider"]
-            user_name = response[i]["data"]["user"]["user_fullname"]
-            user_token = response[i]["token"]
-            number_info = response[i]["data"]["user"]["user_phone"]
-            bot.send_message(message.chat.id,
-                             f'Провайдер: {provider_info}\nФио: {user_name}\nТокен: {user_token}\nТелефон: {number_info}')
+    try:
+        number = message.text
+        request_info_user = requests.get(
+            f'https://api-product.mysmartflat.ru/api/script/getuserdatafromphonenumber/?phone={number}')
+        response = request_info_user
+        response = response.json()
+        i = 0
+        x = 0
+        for i in range(len(response)):
             try:
-                for x in range(len(response[i]["data"]["user"]["apartment"])):
-                    adres = response[i]["data"]["user"]["apartment"][x]["title"]
-                    appartment_id = response[i]["data"]["user"]["apartment"][x]["id"]
-                    sip_info = response[i]["data"]["user"]["apartment"][x]["sip"]
-                    complex_id = response[i]["data"]["user"]["apartment"][x]["complex_id"]
-                    building_id = response[i]["data"]["user"]["apartment"][x]["building_id"]
-                    bot.send_message(message.chat.id,
-                                     f'Адрес: {adres}\nAppartment_id: {appartment_id}\nSip: {sip_info}\nComplex_id: {complex_id}\nBuilding_id: {building_id}')
-                    x += 1
+                provider_info = response[i]["provider"]
+                user_name = response[i]["data"]["user"]["user_fullname"]
+                user_token = response[i]["token"]
+                number_info = response[i]["data"]["user"]["user_phone"]
+                bot.send_message(message.chat.id,
+                                 f'Провайдер: {provider_info}\nФио: {user_name}\nТокен: {user_token}\nТелефон: {number_info}')
+                try:
+                    for x in range(len(response[i]["data"]["user"]["apartment"])):
+                        adres = response[i]["data"]["user"]["apartment"][x]["title"]
+                        appartment_id = response[i]["data"]["user"]["apartment"][x]["id"]
+                        sip_info = response[i]["data"]["user"]["apartment"][x]["sip"]
+                        complex_id = response[i]["data"]["user"]["apartment"][x]["complex_id"]
+                        building_id = response[i]["data"]["user"]["apartment"][x]["building_id"]
+                        bot.send_message(message.chat.id,
+                                         f'Адрес: {adres}\nAppartment_id: {appartment_id}\nSip: {sip_info}\nComplex_id: {complex_id}\nBuilding_id: {building_id}')
+                        x += 1
 
-            except IndexError:
-                bot.send_message(message.chat.id, "Квартиры для этого аккаунта закончились")
-                x = 0
+                except IndexError:
+                    bot.send_message(message.chat.id, "Квартиры для этого аккаунта закончились")
+                    x = 0
 
-        except KeyError:
-            bot.send_message(message.chat.id, 'Нет квартиры')
-        except TypeError:
-            bot.send_message(message.chat.id, 'Вы что-то сделали не так!')
+            except KeyError:
+                bot.send_message(message.chat.id, 'Нет квартиры')
+            except TypeError:
+                bot.send_message(message.chat.id, 'Вы что-то сделали не так!')
+    except TypeError:
+        bot.send_message(message.chat.id, 'Отвалился VPN на моем сервере или вы ввели не валидный номер!')
 
 
 def update_firmware(message):
