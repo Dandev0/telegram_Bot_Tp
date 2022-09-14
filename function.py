@@ -39,8 +39,9 @@ def binding(message):
         serialnumber = info[1]
         request = requests.get(
             f'https://api-product.mysmartflat.ru/api/admin/connect-device-apartment/?apartment={app_id}&serialnumber={serialnumber}')
-        if request.status_code == 200:
-            bot.send_message(message.chat.id, 'Запрос успешно выполнен')
+        request = request.json()
+        if request["error"] == 0:
+            bot.send_message(message.chat.id, 'Запрос успешно выполнен!')
         else:
             bot.send_message(message.chat.id, 'От сервера пришел откат')
     except IndexError:
@@ -100,10 +101,14 @@ def update_firmware(message):
             bot.send_message(message.chat.id, 'Принято Альфа!')
             req = request_set_type_firmware_1.json()
             if req['error'] == 0:
-                request_update_1 = requests.get(
+                request_auto_update = requests.get(
+                    f'https://api-product.mysmartflat.ru/api/admin/update-device-config/?serialnumber={serialnumber}&param=device_firmware_autoupdate&value=true')
+                if request_auto_update.status_code == 200:
+                    time.sleep(.5)
+                    request_update_1 = requests.get(
                     f'https://api-product.mysmartflat.ru/api/admin/update-signal/?serialnumber={serialnumber}&param=reset&value=1')
-                if request_update_1.status_code == 200:
-                    bot.send_message(message.chat.id, 'Команда на обновление отправлена!\nУстройство не обновится, если оно было не на связи!')
+                    if request_update_1.status_code == 200:
+                        bot.send_message(message.chat.id, 'Команда на обновление отправлена!\nУстройство не обновится, если оно было не на связи!')
 
         if type_firmware == 'Бета':
             bot.send_message(message.chat.id, 'Принято Бета!')
@@ -112,10 +117,14 @@ def update_firmware(message):
             time.sleep(1)
             req = request_set_type_firmware_2.json()
             if req['error'] == 0:
-                request_update_2 = requests.get(
-                    f'https://api-product.mysmartflat.ru/api/admin/update-signal/?serialnumber={serialnumber}&param=reset&value=1')
-                if request_update_2.status_code == 200:
-                    bot.send_message(message.chat.id, 'Команда на обновление отправлена!\nУстройство не обновится, если оно было не на связи!')
+                request_auto_update = requests.get(
+                    f'https://api-product.mysmartflat.ru/api/admin/update-device-config/?serialnumber={serialnumber}&param=device_firmware_autoupdate&value=true')
+                if request_auto_update.status_code == 200:
+                    time.sleep(.5)
+                    request_update_2 = requests.get(
+                        f'https://api-product.mysmartflat.ru/api/admin/update-signal/?serialnumber={serialnumber}&param=reset&value=1')
+                    if request_update_2.status_code == 200:
+                        bot.send_message(message.chat.id, 'Команда на обновление отправлена!\nУстройство не обновится, если оно было не на связи!')
 
         if type_firmware == 'Стабильная':
             bot.send_message(message.chat.id, 'Принято Стабильная!')
@@ -124,10 +133,13 @@ def update_firmware(message):
             time.sleep(1)
             req = request_set_type_firmware_3.json()
             if req['error'] == 0:
-                request_update = requests.get(
-                    f'https://api-product.mysmartflat.ru/api/admin/update-signal/?serialnumber={serialnumber}&param=reset&value=1')
-                if request_update.status_code == 200:
-                    bot.send_message(message.chat.id, 'Команда на обновление отправлена!\nУстройство не обновится, если оно было не на связи!')
+                request_auto_update = requests.get(f'https://api-product.mysmartflat.ru/api/admin/update-device-config/?serialnumber={serialnumber}&param=device_firmware_autoupdate&value=true')
+                if request_auto_update.status_code == 200:
+                    time.sleep(.5)
+                    request_update = requests.get(
+                        f'https://api-product.mysmartflat.ru/api/admin/update-signal/?serialnumber={serialnumber}&param=reset&value=1')
+                    if request_update.status_code == 200:
+                        bot.send_message(message.chat.id, 'Команда на обновление отправлена!\nУстройство не обновится, если оно было не на связи!')
     except KeyError:
         bot.send_message(message.chat.id, 'Что-то пошло не так! Проверьте корректность запроса и повторите его')
 
@@ -135,5 +147,3 @@ def update_firmware(message):
         bot.send_message(message.chat.id, 'Что-то пошло не так! Проверьте корректность запроса и повторите его')
     except IndexError:
         bot.send_message(message.chat.id, 'Что-то пошло не так! Проверьте корректность запроса и повторите его')
-
-
