@@ -1,9 +1,23 @@
+import logging
 import time
 import telebot
 import requests
+from telebot import types
 
 bot = telebot.TeleBot('5321021406:AAGFKeWH3wtTHXs7FVG44WbLLKYs84RAXkk')
 
+
+@bot.message_handler(commands='button')
+def button(message):
+    markup = types.InlineKeyboardMarkup(row_width=3)
+    item_1 = types.InlineKeyboardButton('Инфо о пользователе', callback_data='item_1' )
+    item_2 = types.InlineKeyboardButton('Привязка/Отвязка',callback_data='item_2')
+    item_3 = types.InlineKeyboardButton('Карнизы', callback_data='item_3')
+    item_4 = types.InlineKeyboardButton('Прошивка устройства', callback_data='item_4')
+    item_5 = types.InlineKeyboardButton('Информация о устройстве', callback_data='item_5')
+    item_6 = types.InlineKeyboardButton('Обновить сигнал', callback_data='item_6')
+    markup.add(item_1, item_2, item_3, item_4, item_5, item_6)
+    bot.send_message(message.chat.id, 'Выбери команду: ', reply_markup=markup)
 
 def switch(message):
     try:
@@ -29,6 +43,7 @@ def switch(message):
         bot.send_message(message.chat.id, 'Ошибочная форма заполнения')
     except TypeError:
         bot.send_message(message.chat.id, 'Вы что-то сделали не так!')
+    restart_button(message)
 
 
 def binding(message):
@@ -48,6 +63,7 @@ def binding(message):
         bot.send_message(message.chat.id, 'Ошибочная форма заполнения')
     except TypeError:
         bot.send_message(message.chat.id, 'Вы что-то сделали не так!')
+    restart_button(message)
 def info_user(message):
     try:
         number = message.text
@@ -86,7 +102,7 @@ def info_user(message):
                 bot.send_message(message.chat.id, 'Вы что-то сделали не так!')
     except TypeError:
         bot.send_message(message.chat.id, 'Отвалился VPN на моем сервере или вы ввели не валидный номер!')
-
+    restart_button(message)
 
 def update_firmware(message):
     try:
@@ -147,3 +163,56 @@ def update_firmware(message):
         bot.send_message(message.chat.id, 'Что-то пошло не так! Проверьте корректность запроса и повторите его')
     except IndexError:
         bot.send_message(message.chat.id, 'Что-то пошло не так! Проверьте корректность запроса и повторите его')
+    restart_button(message)
+
+def info_device(message):
+    try:
+        info = message.text
+        info = info[0]
+        req = requests.get(f'https://api-product-reserved-2.mysmartflat.ru/api/admin/get-signals/?serialnumber={info}')
+        logging.warning('запрос ушел')
+        if req.status_code == 200:
+            req = req.json()
+            error = req['error']
+            name_signal = req['data']
+            try:
+                if error == 0:
+                    for i in name_signal:
+                        bot.send_message(message.chat.id, f"Сигнал: {i['name']}\nНазвание: {i['title']}\nЗначение: {i['value']}")
+                else:
+                    bot.send_message(message.chat.id, f"Error: {error}")
+            except KeyError:
+                bot.send_message(message.chat.id, f'Кривой ответ сервера')
+        else:
+            bot.send_message(message.chat.id, "Статус код != 200")
+    except KeyError:
+        bot.send_message(message.chat.id, 'Вы ввели не корректный запрос!')
+    restart_button(message)
+def update_signal(message):
+    try:
+        info = message.text
+        info = info.split(', ')
+        serialnumber = info[0]
+        signal = info[1]
+        value = info[2]
+        req = requests.get(f"https://api-product.mysmartflat.ru/api/admin/update-signal/?serialnumber={serialnumber}&param={signal}&value={value}")
+        if req.status_code == 200:
+            bot.send_message(message.chat.id, f'Значение ({value}) для устройства {serialnumber} установлено\nА может и нет(если устройство было не на связи)')
+        else:
+            bot.send_message(message.chat.id, "Ответ сервера != 200")
+
+    except KeyError:
+        bot.send_message(message.chat.id, 'Вы ввели не корректный запрос!')
+    except IndexError:
+        bot.send_message(message.chat.id, 'Вы ввели не корректный запрос!')
+
+    time.sleep(.5)
+    restart_button(message)
+
+
+
+def restart_button(message):
+    try:
+        bot.send_message(message.chat.id, button(message))
+    except:
+        pass
