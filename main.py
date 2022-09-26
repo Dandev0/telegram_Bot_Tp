@@ -1,5 +1,4 @@
-from function import info_user, binding, switch, bot, update_firmware
-from telebot import types
+from function import info_user, binding, switch, bot, update_firmware, info_device, update_signal
 
 
 @bot.message_handler(commands=['help'])
@@ -12,17 +11,6 @@ def start(message):
     user_id = message.from_user.id
     username = message.from_user.first_name
     bot.send_message(message.chat.id, f'Привет {user_id}, {username}, я знаю все про пользоватей Ujin)))')
-
-
-@bot.message_handler(commands='button')
-def button(message):
-    markup = types.InlineKeyboardMarkup(row_width=2)
-    item_1 = types.InlineKeyboardButton('Инфо о пользователе', callback_data='item_1' )
-    item_2 = types.InlineKeyboardButton('Привязка/Отвязка',callback_data='item_2')
-    item_3 = types.InlineKeyboardButton('Карнизы', callback_data='item_3')
-    item_4 = types.InlineKeyboardButton('Прошивка устройства', callback_data='item_4')
-    markup.add(item_1, item_2, item_3, item_4)
-    bot.send_message(message.chat.id, 'Выбери команду: ', reply_markup=markup)
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -43,5 +31,14 @@ def call(call):
             bot.send_message(call.message.chat.id,
                              'Введите серийный номер устройства, тип прошивки(стабильная, альфа или бета(через запятую)')
             bot.register_next_step_handler(call.message, callback=update_firmware)
+        if call.data == 'item_5':
+            bot.send_message(call.message.chat.id,
+                             'Введите серийный номер устройства, чтобы получить о нем информацию!)')
+            bot.register_next_step_handler(call.message, callback=info_device)
+        if call.data == 'item_6':
+            bot.send_message(call.message.chat.id,
+                             'Введите серийный номер устройства, имя сигнала, значение\nВсе через запятую и пробел\nДля инвертирования реле введи сигнал: rele-inv')
+            bot.register_next_step_handler(call.message, callback=update_signal)
+
 
 bot.polling(none_stop=True)
