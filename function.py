@@ -3,20 +3,22 @@ import time
 import telebot
 import requests
 from telebot import types
+from bs4 import BeautifulSoup
 
 bot = telebot.TeleBot('5321021406:AAGFKeWH3wtTHXs7FVG44WbLLKYs84RAXkk')
 
 
 @bot.message_handler(commands='button')
 def button(message):
-    markup = types.InlineKeyboardMarkup(row_width=3)
+    markup = types.InlineKeyboardMarkup(row_width=4)
     item_1 = types.InlineKeyboardButton('Инфо о пользователе', callback_data='item_1' )
     item_2 = types.InlineKeyboardButton('Привязка/Отвязка',callback_data='item_2')
     item_3 = types.InlineKeyboardButton('Карнизы', callback_data='item_3')
     item_4 = types.InlineKeyboardButton('Прошивка устройства', callback_data='item_4')
     item_5 = types.InlineKeyboardButton('Информация о устройстве', callback_data='item_5')
     item_6 = types.InlineKeyboardButton('Обновить сигнал', callback_data='item_6')
-    markup.add(item_1, item_2, item_3, item_4, item_5, item_6)
+    item_7 = types.InlineKeyboardButton('Устройства на квартире', callback_data='item_7')
+    markup.add(item_1, item_2, item_3, item_4, item_5, item_6, item_7)
     bot.send_message(message.chat.id, 'Выбери команду: ', reply_markup=markup)
 
 def switch(message):
@@ -209,6 +211,20 @@ def update_signal(message):
     time.sleep(.5)
     restart_button(message)
 
+
+def device_info(message):
+    try:
+        app_id = message.text
+        request = requests.get(f'https://api-product.mysmartflat.ru/api/script/deviceinfo/?apartment_id={app_id}').text
+        soup = BeautifulSoup(request, 'lxml')
+        soup.find_all('th').clear()
+        title = soup.find_all('tr')
+        for i in title:
+            bot.send_message(message.chat.id, i.text)
+        time.sleep(.5)
+        restart_button(message)
+    except:
+        bot.send_message(message.chat.id, 'Вы сделали что-то не так!')
 
 
 def restart_button(message):
