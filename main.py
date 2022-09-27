@@ -1,4 +1,4 @@
-from function import info_user, binding, switch, bot, update_firmware, info_device, update_signal
+from function import info_user, binding, switch, bot, update_firmware, info_device, update_signal, device_info
 
 
 @bot.message_handler(commands=['help'])
@@ -39,6 +39,11 @@ def call(call):
             bot.send_message(call.message.chat.id,
                              'Введите серийный номер устройства, имя сигнала, значение\nВсе через запятую и пробел\nДля инвертирования реле введи сигнал: rele-inv')
             bot.register_next_step_handler(call.message, callback=update_signal)
+
+        if call.data == 'item_7':
+            bot.send_message(call.message.chat.id,
+                             'Введите app_id для получения списка устройств!')
+            bot.register_next_step_handler(call.message, callback=device_info)
 
 
 bot.polling(none_stop=True)
