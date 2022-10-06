@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 bot = telebot.TeleBot('5321021406:AAGFKeWH3wtTHXs7FVG44WbLLKYs84RAXkk')
 
 
-@bot.message_handler(commands='button')
+@bot.message_handler(commands=['button'])
 def button(message):
     markup = types.InlineKeyboardMarkup(row_width=4)
     item_1 = types.InlineKeyboardButton('Инфо о пользователе', callback_data='item_1' )
@@ -19,7 +19,7 @@ def button(message):
     item_6 = types.InlineKeyboardButton('Обновить сигнал', callback_data='item_6')
     item_7 = types.InlineKeyboardButton('Устройства на квартире', callback_data='item_7')
     markup.add(item_1, item_2, item_3, item_4, item_5, item_6, item_7)
-    bot.send_message(message.chat.id, 'Выбери команду: ', reply_markup=markup)
+    bot.send_message(message.chat.id, 'Выбери команду: ', reply_markup=[markup])
 
 def switch(message):
     try:
