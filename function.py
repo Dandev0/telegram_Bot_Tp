@@ -170,7 +170,6 @@ def update_firmware(message):
 def info_device(message):
     try:
         info = message.text
-        info = info[0]
         req = requests.get(f'https://api-product-reserved-2.mysmartflat.ru/api/admin/get-signals/?serialnumber={info}')
         logging.warning('запрос ушел')
         if req.status_code == 200:
