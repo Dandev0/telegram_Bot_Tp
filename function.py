@@ -4,13 +4,16 @@ import telebot
 import requests
 from telebot import types
 from bs4 import BeautifulSoup
+import emoji
+import datetime
+
 
 bot = telebot.TeleBot('5321021406:AAGFKeWH3wtTHXs7FVG44WbLLKYs84RAXkk')
 
 
 @bot.message_handler(commands=['button'])
 def button(message):
-    markup = types.InlineKeyboardMarkup(row_width=4)
+    markup = types.InlineKeyboardMarkup(row_width=2)
     item_1 = types.InlineKeyboardButton('Инфо о пользователе', callback_data='item_1' )
     item_2 = types.InlineKeyboardButton('Привязка/Отвязка',callback_data='item_2')
     item_3 = types.InlineKeyboardButton('Карнизы', callback_data='item_3')
@@ -18,8 +21,10 @@ def button(message):
     item_5 = types.InlineKeyboardButton('Информация о устройстве', callback_data='item_5')
     item_6 = types.InlineKeyboardButton('Обновить сигнал', callback_data='item_6')
     item_7 = types.InlineKeyboardButton('Устройства на квартире', callback_data='item_7')
-    markup.add(item_1, item_2, item_3, item_4, item_5, item_6, item_7)
-    bot.send_message(message.chat.id, 'Выбери команду: ', reply_markup=[markup])
+    item_8 = types.InlineKeyboardButton('Адрес по серийнику', callback_data='item_8')
+    item_9 = types.InlineKeyboardButton('Обновить массив устройств', callback_data='item_9')
+    markup.add(item_1, item_2, item_3, item_4, item_5, item_6, item_7, item_8, item_9)
+    bot.send_message(message.chat.id, 'Выбери команду: ', reply_markup=markup)
 
 def switch(message):
     try:
@@ -78,13 +83,15 @@ def info_user(message):
         for i in range(len(response)):
             try:
                 provider_info = response[i]["provider"]
+                user_id = user_name = response[i]["data"]["user"]['user_id']
                 user_name = response[i]["data"]["user"]["user_fullname"]
                 user_token = response[i]["token"]
                 number_info = response[i]["data"]["user"]["user_phone"]
                 bot.send_message(message.chat.id,
-                                 f'Провайдер: {provider_info}\nФио: {user_name}\nТокен: {user_token}\nТелефон: {number_info}')
+                                 f'Провайдер: {provider_info}\nId пользователя: {user_id}\nФио: {user_name}\nТокен: {user_token}\nТелефон: {number_info}')
                 try:
                     for x in range(len(response[i]["data"]["user"]["apartment"])):
+
                         adres = response[i]["data"]["user"]["apartment"][x]["title"]
                         appartment_id = response[i]["data"]["user"]["apartment"][x]["id"]
                         sip_info = response[i]["data"]["user"]["apartment"][x]["sip"]
@@ -168,6 +175,7 @@ def update_firmware(message):
     restart_button(message)
 
 def info_device(message):
+    from telebot.apihelper import ApiTelegramException
     try:
         info = message.text
         req = requests.get(f'https://api-product-reserved-2.mysmartflat.ru/api/admin/get-signals/?serialnumber={info}')
@@ -179,6 +187,7 @@ def info_device(message):
             try:
                 if error == 0:
                     for i in name_signal:
+                        time.sleep(0.1)
                         bot.send_message(message.chat.id, f"Сигнал: {i['name']}\nНазвание: {i['title']}\nЗначение: {i['value']}")
                 else:
                     bot.send_message(message.chat.id, f"Error: {error}")
@@ -224,6 +233,107 @@ def device_info(message):
         restart_button(message)
     except:
         bot.send_message(message.chat.id, 'Вы сделали что-то не так!')
+
+def check_appid(message):
+    try:
+        serial_number = message.text
+        header = {'serialnumber':f'{serial_number}'}
+        url = f'https://api-product.mysmartflat.ru/api/script6/device-to-apartment'
+        request = requests.get(url=url, headers=header)
+        response = request.json()
+        if response['error'] == 0:
+            name = [response['data']['device']['serialnumber'], response['data']['device']['model']['name'], response['data']['device']['model']['title']]
+            app_id = response['data']['apartment']
+            bot.send_message(message.chat.id, text=f'Инфо:\n{name[2]} ({name[1]}) {name[0]}\nApp_id: {app_id}')
+            restart_button(message)
+        else:
+            bot.send_message(message.chat.id, text=f'Error = {response["error"]}')
+            restart_button(message)
+    except Exception as ex:
+        bot.send_message(message.chat.id, text=ex)
+        restart_button(message)
+
+
+@bot.message_handler(content_types=['document'])
+def update_more_device(message):
+    try:
+        import os
+        file_id = bot.get_file(message.document.file_id)
+        global file_name
+        file_name = message.document.file_name
+        dw_file = bot.download_file(file_id.file_path)
+        dw_file = str(dw_file)
+        print(dw_file)
+        with open(file_name, 'w') as devices:
+            devices.write(str(dw_file))
+            print('Записал')
+        bot.send_message(message.chat.id, text='Введите необходимый тип прошивки!\nАльфа, Бета или Стабильная')
+        bot.register_next_step_handler(message=message, callback=read)
+
+
+    except Exception as ex:
+        bot.send_message(message.chat.id, text=ex)
+
+
+def read(message):
+    type_firmware = message.text
+    if type_firmware == 'Альфа':
+        device_firmware = 'device_firmware_alfa_update'
+        update(message, device_firmware)
+
+    elif type_firmware == 'Бета':
+        device_firmware = 'device_firmware_beta_update'
+        update(message, device_firmware)
+
+    elif type_firmware == 'Стабильная':
+        device_firmware = 'device_firmware_stable_update'
+        update(message, device_firmware)
+
+    else:
+        bot.send_message(message.chat.id, f'Я не знаю такой тип устройства: {type_firmware}')
+        restart_button(message)
+
+
+def update(message, device_firmware):
+    with open(file_name, 'r+') as file:
+        start_time = datetime.datetime.now()
+        device = file.read()
+        device = device.replace('b', '')
+        device = device.replace("'", '')
+        device = device.replace("\\r", '')
+        device = device.split('\\n')
+        status_device_pass = []
+        status_device_fail = []
+        bot.send_message(message.chat.id, text='Скрипт обновления запущен, по окончания я вас уведомлю!')
+        for sn in device:
+            emo_pass = emoji.emojize(f'{sn} --- :check_mark_button:')
+            emo_fail = emoji.emojize(f'{sn} --- :cross_mark:')
+            request_set_type_firmware_1 = requests.get(
+                f'https://api-product.mysmartflat.ru/api/admin/update-device-config/?serialnumber={sn}&param={device_firmware}&value=true')
+            time.sleep(.3)
+            req = request_set_type_firmware_1.json()
+            if req['error'] == 0:
+                request_auto_update = requests.get(
+                    f'https://api-product.mysmartflat.ru/api/admin/update-device-config/?serialnumber={sn}&param=device_firmware_autoupdate&value=true')
+                if request_auto_update.status_code == 200:
+                    time.sleep(.3)
+                    request_update_1 = requests.get(
+                        f'https://api-product.mysmartflat.ru/api/admin/update-signal/?serialnumber={sn}&param=reset&value=1')
+                    if request_update_1.status_code == 200:
+                        status_device_pass.append(emo_pass)
+                        print(emo_pass)
+
+            else:
+                print(emo_fail)
+                status_device_fail.append(emo_fail)
+            time.sleep(.1)
+        bot.send_message(message.chat.id, text='Устройства отправлены на обновления!')
+        bot.send_message(message.chat.id, text=f'Статистика успешных обновлений:\n{str(status_device_pass)}')
+        print(emo_fail)
+        bot.send_message(message.chat.id, text=f'Статистика не успешных обновлений:\n{str(status_device_fail)}')
+        Difference = datetime.datetime.now() - start_time
+        bot.send_message(message.chat.id, text=f'Время работы скрипта заняло: {Difference}\nА сейчас подумайте сколько бы заняло времени сделать задачу на интеграцию и ждать ее выполнения!' )
+        restart_button(message)
 
 
 def restart_button(message):
